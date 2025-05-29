@@ -1,40 +1,52 @@
-package com.example.vietflightinventory.helpers; // Hoặc package bạn đã đặt lớp này
+// Cập nhật MongoDBHelper.java
+package com.example.vietflightinventory.helpers;
 
-import com.example.vietflightinventory.BuildConfig; // QUAN TRỌNG: Import lớp BuildConfig của ứng dụng bạn
+import android.util.Log;
+import com.example.vietflightinventory.BuildConfig;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document; // Import Document từ org.bson
+import org.bson.Document;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MongoDBHelper {
 
     private static final String TAG = "MongoDBHelper";
 
-    // Sử dụng các hằng số từ BuildConfig
+    // Collection names
+    public static final String COLLECTION_USERS = "users";
+    public static final String COLLECTION_FLIGHTS = "flights";
+    public static final String COLLECTION_PRODUCTS = "products";
+    public static final String COLLECTION_HANDOVERS = "handovers";
+    public static final String COLLECTION_HANDOVER_ITEMS = "handover_items";
+
     private static final String CONNECTION_STRING = BuildConfig.MONGO_CONNECTION_STRING;
     private static final String DATABASE_NAME = BuildConfig.MONGO_DB_NAME;
 
     private static MongoClient mongoClientInstance;
     private static MongoDatabase databaseInstance;
+    private static ExecutorService executorService;
+
+    // Initialize executor service for background operations
+    static {
+        executorService = Executors.newFixedThreadPool(3);
+    }
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClientInstance == null) {
             try {
-                // Kiểm tra xem chuỗi kết nối có rỗng không trước khi tạo client
-                if (CONNECTION_STRING == null || CONNECTION_STRING.isEmpty() ||
-                        (BuildConfig.MONGO_USER != null && BuildConfig.MONGO_USER.isEmpty()) || // Kiểm tra user/pass rỗng nếu chuỗi chính cũng rỗng
-                        (BuildConfig.MONGO_PASSWORD != null && BuildConfig.MONGO_PASSWORD.isEmpty())) {
-                    android.util.Log.e(TAG, "MongoDB connection string or credentials are not configured properly in BuildConfig.");
+                if (CONNECTION_STRING == null || CONNECTION_STRING.isEmpty()) {
+                    Log.e(TAG, "MongoDB connection string is not configured properly in BuildConfig.");
                     return null;
                 }
-                // KHÔNG thực hiện việc này trên UI thread trong ứng dụng thực tế!
-                // Việc tạo client có thể mất thời gian.
+
                 mongoClientInstance = MongoClients.create(CONNECTION_STRING);
-                android.util.Log.d(TAG, "MongoClient initialized successfully!");
+                Log.d(TAG, "MongoClient initialized successfully!");
             } catch (Exception e) {
-                android.util.Log.e(TAG, "Error initializing MongoClient: ", e);
-                // Xử lý lỗi phù hợp, ví dụ: throw new RuntimeException("Could not initialize MongoClient", e);
+                Log.e(TAG, "Error initializing MongoClient: ", e);
+                return null;
             }
         }
         return mongoClientInstance;
@@ -46,9 +58,9 @@ public class MongoDBHelper {
             if (client != null) {
                 try {
                     databaseInstance = client.getDatabase(DATABASE_NAME);
-                    android.util.Log.d(TAG, "Database instance '" + DATABASE_NAME + "' acquired!");
+                    Log.d(TAG, "Database instance '" + DATABASE_NAME + "' acquired!");
                 } catch (Exception e) {
-                    android.util.Log.e(TAG, "Error acquiring database: ", e);
+                    Log.e(TAG, "Error acquiring database: ", e);
                 }
             }
         }
@@ -61,10 +73,54 @@ public class MongoDBHelper {
             try {
                 return db.getCollection(collectionName);
             } catch (Exception e) {
-                android.util.Log.e(TAG, "Error acquiring collection '" + collectionName + "': ", e);
+                Log.e(TAG, "Error acquiring collection '" + collectionName + "': ", e);
             }
         }
         return null;
+    }
+
+    // Collection getters
+    public static MongoCollection<Document> getUsersCollection() {
+        return getCollection(COLLECTION_USERS);
+    }
+
+    public static MongoCollection<Document> getFlightsCollection() {
+        return getCollection(COLLECTION_FLIGHTS);
+    }
+
+    public static MongoCollection<Document> getProductsCollection() {
+        return getCollection(COLLECTION_PRODUCTS);
+    }
+
+    public static MongoCollection<Document> getHandoversCollection() {
+        return getCollection(COLLECTION_HANDOVERS);
+    }
+
+    public static MongoCollection<Document> getHandoverItemsCollection() {
+        return getCollection(COLLECTION_HANDOVER_ITEMS);
+    }
+
+    // Execute database operations in background
+    public static void executeInBackground(Runnable task) {
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.execute(task);
+        }
+    }
+
+    // Test connection
+    public static boolean testConnection() {
+        try {
+            MongoDatabase db = getDatabase();
+            if (db != null) {
+                // Try to list collections to test connection
+                db.listCollectionNames().first();
+                Log.d(TAG, "Database connection test successful!");
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Database connection test failed: ", e);
+        }
+        return false;
     }
 
     public static synchronized void close() {
@@ -73,20 +129,14 @@ public class MongoDBHelper {
                 mongoClientInstance.close();
                 mongoClientInstance = null;
                 databaseInstance = null;
-                android.util.Log.d(TAG, "MongoClient closed.");
+                Log.d(TAG, "MongoClient closed.");
             } catch (Exception e) {
-                android.util.Log.e(TAG, "Error closing MongoClient: ", e);
+                Log.e(TAG, "Error closing MongoClient: ", e);
             }
         }
-    }
 
-    public static MongoCollection<Document> getUsersCollection() {
-        return getCollection("users");
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
-
-    public static MongoCollection<Document> getProductsCollection() {
-        return getCollection("products");
-    }
-
-    // Thêm các phương thức tương tự cho flights, handovers, v.v. nếu cần
 }

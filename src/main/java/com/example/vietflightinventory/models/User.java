@@ -1,30 +1,37 @@
+// src/main/java/com/example/vietflightinventory/models/User.java
 package com.example.vietflightinventory.models;
 
-import java.util.Date; // Bạn có thể cần cho các trường ngày tháng sau này
+import com.example.vietflightinventory.constants.AppConstants;
+import java.util.Date;
 
 public class User {
 
-    private String _id; // ID từ MongoDB (thường là ObjectId dưới dạng String)
-    private String username; // Tên đăng nhập, có thể là email
-    private String password; // Mật khẩu (LƯU Ý: Sẽ cần được mã hóa trước khi lưu vào DB)
-    private String fullname; // Họ và tên đầy đủ
-    private String role;     // Vai trò: ví dụ "InflightServicesStaff", "FlightAttendant", "Administrator"
-    private String email;    // Email
-    private String phoneNumber; // Số điện thoại
-    private String company;  // Công ty, ví dụ: "VIETJET"
-    private String workplace; // Nơi làm việc, ví dụ: "SGN" (Mã sân bay Tân Sơn Nhất)
-    // private Date createdAt; // Thời điểm tạo tài khoản (có thể thêm sau)
-    // private Date updatedAt; // Thời điểm cập nhật thông tin lần cuối (có thể thêm sau)
+    private String _id;
+    private String username;
+    private String password;
+    private String fullname;
+    private String role;
+    private String email;
+    private String phoneNumber;
+    private String company;
+    private String workplace;
+    private Date createdAt;
+    private Date updatedAt;
+    private boolean isActive;
 
-    // Constructor rỗng - cần thiết cho một số thư viện/framework (ví dụ: khi lấy dữ liệu từ DB)
+    // Constructor rỗng
     public User() {
+        this.isActive = true;
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 
-    // Constructor đầy đủ (trừ _id vì nó thường được DB tự tạo)
+    // Constructor đầy đủ
     public User(String username, String password, String fullname, String role,
                 String email, String phoneNumber, String company, String workplace) {
+        this();
         this.username = username;
-        this.password = password; // Nhắc lại: đây nên là mật khẩu đã mã hóa
+        this.password = password;
         this.fullname = fullname;
         this.role = role;
         this.email = email;
@@ -33,10 +40,7 @@ public class User {
         this.workplace = workplace;
     }
 
-    // --- Getters and Setters cho tất cả các trường ---
-    // Bạn hãy tự tạo các getter và setter này nhé.
-    // Trong Android Studio: Chuột phải trong code -> Generate -> Getters and Setters -> Chọn tất cả các trường.
-
+    // Getters and Setters
     public String get_id() {
         return _id;
     }
@@ -67,6 +71,11 @@ public class User {
 
     public void setFullname(String fullname) {
         this.fullname = fullname;
+    }
+
+    // ADD MISSING METHOD
+    public String getFullName() {
+        return this.fullname;
     }
 
     public String getRole() {
@@ -109,7 +118,96 @@ public class User {
         this.workplace = workplace;
     }
 
-    // Ví dụ về toString() để debug (tùy chọn)
+    // ADD MISSING METHOD
+    public String getAirport() {
+        return this.workplace;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    // Validation methods
+    public ValidationResult validateForSave() {
+        ValidationResult result = new ValidationResult();
+
+        if (username == null || username.trim().isEmpty()) {
+            result.addError("Tên đăng nhập không được để trống");
+        } else if (username.length() < 3) {
+            result.addError("Tên đăng nhập phải có ít nhất 3 ký tự");
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            result.addError("Mật khẩu không được để trống");
+        } else if (password.length() < 6) {
+            result.addError("Mật khẩu phải có ít nhất 6 ký tự");
+        }
+
+        if (fullname == null || fullname.trim().isEmpty()) {
+            result.addError("Họ tên không được để trống");
+        }
+
+        if (role == null || role.trim().isEmpty()) {
+            result.addError("Vai trò không được để trống");
+        } else if (!isValidRole(role)) {
+            result.addError("Vai trò không hợp lệ");
+        }
+
+        if (email == null || email.trim().isEmpty()) {
+            result.addError("Email không được để trống");
+        } else if (!isValidEmail(email)) {
+            result.addError("Email không hợp lệ");
+        }
+
+        return result;
+    }
+
+    private boolean isValidRole(String role) {
+        return AppConstants.ROLE_ADMINISTRATOR.equals(role) ||
+                AppConstants.ROLE_INFLIGHT_SERVICES_STAFF.equals(role) ||
+                AppConstants.ROLE_FLIGHT_ATTENDANT.equals(role);
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.contains("@") && email.contains(".");
+    }
+
+    public boolean hasRole(String requiredRole) {
+        return requiredRole.equals(this.role);
+    }
+
+    public boolean isAdmin() {
+        return AppConstants.ROLE_ADMINISTRATOR.equals(this.role);
+    }
+
+    public boolean isStaff() {
+        return AppConstants.ROLE_INFLIGHT_SERVICES_STAFF.equals(this.role);
+    }
+
+    public boolean isFlightAttendant() {
+        return AppConstants.ROLE_FLIGHT_ATTENDANT.equals(this.role);
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -118,6 +216,7 @@ public class User {
                 ", fullname='" + fullname + '\'' +
                 ", role='" + role + '\'' +
                 ", email='" + email + '\'' +
+                ", workplace='" + workplace + '\'' +
                 '}';
     }
 }

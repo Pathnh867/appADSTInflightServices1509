@@ -1,28 +1,25 @@
+// Cập nhật HandoverItem.java
 package com.example.vietflightinventory.models;
 
 public class HandoverItem {
 
-    private String productId; // ID của sản phẩm (liên kết đến Product._id)
-    private String productName; // Tên sản phẩm (lưu lại để hiển thị tiện lợi, tránh query lại)
-    private String productImageUrl; // URL hình ảnh sản phẩm (tương tự, để hiển thị)
-    private double unitPrice; // Đơn giá của sản phẩm tại thời điểm bàn giao
+    private String productId;
+    private String productName;
+    private String productImageUrl;
+    private double unitPrice;
+    private int initialQuantityFromStaff;
+    private int actualReceivedByFAQuantity;
+    private int soldQuantityByFA;
+    private int cancelledQuantityByFA;
+    private int actualReturnedToStaffQuantity;
+    private String notes; // Notes for this specific item
+    private String category; // Product category for grouping
 
-    // Số lượng khi Nhân viên Cung ứng (NVCS) bàn giao cho Tiếp viên (TV)
-    private int initialQuantityFromStaff; // Số lượng NVCS dự định giao ban đầu (cho giao ca hoặc top-up)
-    private int actualReceivedByFAQuantity; // Số lượng TV xác nhận thực nhận từ NVCS
-
-    // Số lượng liên quan đến việc TV trả hàng lại cho NVCS (sau chuyến bay)
-    private int soldQuantityByFA; // Số lượng TV báo đã bán
-    private int cancelledQuantityByFA; // Số lượng TV báo hủy (hỏng, hết hạn, v.v.)
-    // Số lượng tồn TV trả lại có thể được tính: actualReceivedByFAQuantity - soldQuantityByFA - cancelledQuantityByFA
-    private int actualReturnedToStaffQuantity; // Số lượng NVCS xác nhận thực nhận lại từ TV
-
-    // Constructor rỗng
     public HandoverItem() {
     }
 
-    // Constructor cơ bản khi tạo item (ví dụ: NVCS chuẩn bị hàng giao)
-    public HandoverItem(String productId, String productName, String productImageUrl, double unitPrice, int initialQuantityFromStaff) {
+    public HandoverItem(String productId, String productName, String productImageUrl,
+                        double unitPrice, int initialQuantityFromStaff) {
         this.productId = productId;
         this.productName = productName;
         this.productImageUrl = productImageUrl;
@@ -30,90 +27,183 @@ public class HandoverItem {
         this.initialQuantityFromStaff = initialQuantityFromStaff;
     }
 
-    // --- Getters and Setters ---
-    // Hãy tạo getters và setters cho tất cả các trường.
-    // Trong Android Studio: Chuột phải trong code -> Generate -> Getters and Setters -> Chọn tất cả các trường.
-
-    public String getProductId() {
-        return productId;
+    // Validation Methods
+    public boolean isValidQuantity(int quantity) {
+        return quantity >= 0;
     }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public boolean isValidInitialQuantity() {
+        return isValidQuantity(initialQuantityFromStaff) && initialQuantityFromStaff > 0;
     }
 
-    public String getProductName() {
-        return productName;
+    public boolean isValidPrice() {
+        return unitPrice >= 0;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    public boolean hasValidProductInfo() {
+        return productId != null && !productId.trim().isEmpty() &&
+                productName != null && !productName.trim().isEmpty();
     }
 
-    public String getProductImageUrl() {
-        return productImageUrl;
+    // Utility Methods
+    public double getTotalValue() {
+        return unitPrice * initialQuantityFromStaff;
     }
 
-    public void setProductImageUrl(String productImageUrl) {
-        this.productImageUrl = productImageUrl;
+    public String getFormattedTotalValue() {
+        return String.format("%,.0f VND", getTotalValue());
     }
 
-    public double getUnitPrice() {
-        return unitPrice;
+    public String getFormattedUnitPrice() {
+        return String.format("%,.0f VND", unitPrice);
     }
 
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
+    public int getExpectedReturnQuantity() {
+        // Expected return = received - sold - cancelled
+        return Math.max(0, actualReceivedByFAQuantity - soldQuantityByFA - cancelledQuantityByFA);
     }
 
-    public int getInitialQuantityFromStaff() {
-        return initialQuantityFromStaff;
+    public int getDiscrepancyQuantity() {
+        // Discrepancy = expected return - actual returned
+        return getExpectedReturnQuantity() - actualReturnedToStaffQuantity;
     }
 
+    public boolean hasDiscrepancy() {
+        return getDiscrepancyQuantity() != 0;
+    }
+
+    public String getDiscrepancyStatus() {
+        int discrepancy = getDiscrepancyQuantity();
+        if (discrepancy > 0) {
+            return "Thiếu " + discrepancy;
+        } else if (discrepancy < 0) {
+            return "Thừa " + Math.abs(discrepancy);
+        } else {
+            return "Đúng";
+        }
+    }
+
+    public boolean isFullyProcessed() {
+        // Item is fully processed when all quantities are accounted for
+        return actualReceivedByFAQuantity > 0 &&
+                (soldQuantityByFA + cancelledQuantityByFA + actualReturnedToStaffQuantity) == actualReceivedByFAQuantity;
+    }
+
+    public double getRevenue() {
+        // Revenue = sold quantity * unit price
+        return soldQuantityByFA * unitPrice;
+    }
+
+    public String getFormattedRevenue() {
+        return String.format("%,.0f VND", getRevenue());
+    }
+
+    public double getLossValue() {
+        // Loss = cancelled quantity * unit price
+        return cancelledQuantityByFA * unitPrice;
+    }
+
+    public String getFormattedLossValue() {
+        return String.format("%,.0f VND", getLossValue());
+    }
+
+    // Validation for complete item data
+    public ValidationResult validateForHandover() {
+        ValidationResult result = new ValidationResult();
+
+        if (!hasValidProductInfo()) {
+            result.addError("Thông tin sản phẩm không hợp lệ");
+        }
+
+        if (!isValidInitialQuantity()) {
+            result.addError("Số lượng phải lớn hơn 0");
+        }
+
+        if (!isValidPrice()) {
+            result.addError("Giá sản phẩm không hợp lệ");
+        }
+
+        return result;
+    }
+
+    public ValidationResult validateForReturn() {
+        ValidationResult result = validateForHandover();
+
+        if (actualReceivedByFAQuantity <= 0) {
+            result.addError("Chưa có thông tin số lượng thực nhận");
+        }
+
+        if (soldQuantityByFA < 0) {
+            result.addError("Số lượng đã bán không hợp lệ");
+        }
+
+        if (cancelledQuantityByFA < 0) {
+            result.addError("Số lượng hủy không hợp lệ");
+        }
+
+        if ((soldQuantityByFA + cancelledQuantityByFA) > actualReceivedByFAQuantity) {
+            result.addError("Tổng số lượng bán + hủy không thể lớn hơn số lượng thực nhận");
+        }
+
+        return result;
+    }
+
+    // Getters and Setters
+    public String getProductId() { return productId; }
+    public void setProductId(String productId) { this.productId = productId; }
+
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+
+    public String getProductImageUrl() { return productImageUrl; }
+    public void setProductImageUrl(String productImageUrl) { this.productImageUrl = productImageUrl; }
+
+    public double getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+
+    public int getInitialQuantityFromStaff() { return initialQuantityFromStaff; }
     public void setInitialQuantityFromStaff(int initialQuantityFromStaff) {
-        this.initialQuantityFromStaff = initialQuantityFromStaff;
+        this.initialQuantityFromStaff = Math.max(0, initialQuantityFromStaff);
     }
 
-    public int getActualReceivedByFAQuantity() {
-        return actualReceivedByFAQuantity;
-    }
-
+    public int getActualReceivedByFAQuantity() { return actualReceivedByFAQuantity; }
     public void setActualReceivedByFAQuantity(int actualReceivedByFAQuantity) {
-        this.actualReceivedByFAQuantity = actualReceivedByFAQuantity;
+        this.actualReceivedByFAQuantity = Math.max(0, actualReceivedByFAQuantity);
     }
 
-    public int getSoldQuantityByFA() {
-        return soldQuantityByFA;
-    }
-
+    public int getSoldQuantityByFA() { return soldQuantityByFA; }
     public void setSoldQuantityByFA(int soldQuantityByFA) {
-        this.soldQuantityByFA = soldQuantityByFA;
+        this.soldQuantityByFA = Math.max(0, soldQuantityByFA);
     }
 
-    public int getCancelledQuantityByFA() {
-        return cancelledQuantityByFA;
-    }
-
+    public int getCancelledQuantityByFA() { return cancelledQuantityByFA; }
     public void setCancelledQuantityByFA(int cancelledQuantityByFA) {
-        this.cancelledQuantityByFA = cancelledQuantityByFA;
+        this.cancelledQuantityByFA = Math.max(0, cancelledQuantityByFA);
     }
 
-    public int getActualReturnedToStaffQuantity() {
-        return actualReturnedToStaffQuantity;
-    }
-
+    public int getActualReturnedToStaffQuantity() { return actualReturnedToStaffQuantity; }
     public void setActualReturnedToStaffQuantity(int actualReturnedToStaffQuantity) {
-        this.actualReturnedToStaffQuantity = actualReturnedToStaffQuantity;
+        this.actualReturnedToStaffQuantity = Math.max(0, actualReturnedToStaffQuantity);
     }
 
-    // toString() để debug (tùy chọn)
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
     @Override
     public String toString() {
         return "HandoverItem{" +
                 "productId='" + productId + '\'' +
                 ", productName='" + productName + '\'' +
                 ", initialQuantityFromStaff=" + initialQuantityFromStaff +
+                ", actualReceivedByFAQuantity=" + actualReceivedByFAQuantity +
                 ", soldQuantityByFA=" + soldQuantityByFA +
+                ", cancelledQuantityByFA=" + cancelledQuantityByFA +
+                ", actualReturnedToStaffQuantity=" + actualReturnedToStaffQuantity +
+                ", totalValue=" + getFormattedTotalValue() +
+                ", hasDiscrepancy=" + hasDiscrepancy() +
                 '}';
     }
 }

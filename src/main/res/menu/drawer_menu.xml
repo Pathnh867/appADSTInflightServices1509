@@ -1,23 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_create"
-        android:title="Tạo bàn giao"
-        android:icon="@android:drawable/ic_menu_add" />
-    <item android:id="@+id/nav_receive"
-        android:title="Nhận bàn giao"
-        android:icon="@android:drawable/ic_menu_send" />
-    <item android:id="@+id/nav_change"
-        android:title="Đổi Tàu/Chuyến"
-        android:icon="@android:drawable/ic_menu_rotate" />
-    <item android:id="@+id/nav_report"
-        android:title="Báo cáo"
-        android:icon="@android:drawable/ic_menu_info_details" />
-    <item android:id="@+id/nav_account"
-        android:title="Thông tin tài khoản"
-        android:icon="@android:drawable/ic_menu_myplaces" />
-    <item android:id="@+id/nav_password"
-        android:title="Đổi mật khẩu"
-        android:icon="@android:drawable/ic_lock_lock" />
-    <item android:id="@+id/nav_logout"
-        android:title="Đăng xuất"
-        android:icon="@android:drawable/ic_lock_power_off" />
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/nav_create_handover"
+            android:icon="@drawable/ic_add_box"
+            android:title="Tạo bàn giao"/>
+
+        <item
+            android:id="@+id/nav_receive_handover"
+            android:icon="@drawable/ic_inbox"
+            android:title="Nhận bàn giao"/>
+
+        <item
+            android:id="@+id/nav_change_flight"
+            android:icon="@drawable/ic_swap_horiz"
+            android:title="Đổi Tàu/Chuyến"/>
+
+        <item
+            android:id="@+id/nav_report"
+            android:icon="@drawable/ic_assessment"
+            android:title="Báo cáo"/>
+
+    </group>
+
+    <item android:title="Tài khoản">
+        <menu>
+            <item
+                android:id="@+id/nav_account_info"
+                android:icon="@drawable/ic_person"
+                android:title="Thông tin tài khoản"/>
+
+            <item
+                android:id="@+id/nav_change_password"
+                android:icon="@drawable/ic_lock"
+                android:title="Đổi mật khẩu"/>
+
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_exit_to_app"
+                android:title="Đăng xuất"/>
+        </menu>
+    </item>
+
 </menu>

@@ -157,5 +157,11 @@
     android:textStyle="bold"
     android:layout_margin="16dp"
     android:visibility="gone" tools:visibility="visible"/>
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
 
 </LinearLayout>

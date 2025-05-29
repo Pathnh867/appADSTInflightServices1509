@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/vietjet_logo"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nhân viên cung ứng"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginStart="12dp"/>
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đăng xuất"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <!-- Menu chính -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chọn chức năng:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCreateHandover"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Tạo bàn giao"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"
+        android:background="@color/vietjet_orange"
+        android:textColor="@android:color/white"/>
+
+    <Button
+        android:id="@+id/btnReceiveHandover"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Nhận bàn giao"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btnReport"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Báo cáo"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btnUnlockData"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Mở khóa dữ liệu"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"/>
+
+</LinearLayout>
